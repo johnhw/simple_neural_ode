@@ -51,7 +51,7 @@ def backward(x1, dloss_dx_t1, f, df_dx, t0, t1):
 # at the output and the ODE function
 
 
-def make_grad_loss(loss_fn, layer_fn):
+def make_grad_loss(loss_fn, layer_fn, weights):
 
     f = lambda x, t, w=weights: layer_fn(x, t, w)
     # with respect to x
@@ -61,7 +61,7 @@ def make_grad_loss(loss_fn, layer_fn):
     # compute gradient of loss function w.r.t output/state
     dloss_dx = grad(loss_fn)
 
-    def grad_loss(x0, x1):
+    def grad_loss(x0, x1, t0, t1):
         x1_pred = forward(x0, f, t0, t1)  # predict to t1
         loss = loss_fn(x1_pred, x1)  # loss at prediction
         # compute gradient of loss of (x1_pred, x1)
@@ -121,7 +121,7 @@ def gradient_descent(x0s, x1s, t0s, t1s, weights, grad_loss, steps, delta=1e-2):
 
         # (very slowly) accumulate gradient
         for x0, x1, t0, t1 in zip(x0s, x1s, t0s, t1s):
-            l, dl_dw = grad_loss(x0, x1)
+            l, dl_dw = grad_loss(x0, x1, t0, t1)
             total_grad += dl_dw
             total_loss += l
 
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     t0, t1 = 0, 1
     layer, weights = make_layer(3)
     grad_loss = make_grad_loss(
-        loss_fn=lambda x, y: np.sum((x - y) ** 2), layer_fn=layer
+        loss_fn=lambda x, y: np.sum((x - y) ** 2), layer_fn=layer, weights=weights
     )
 
     gradient_descent(
